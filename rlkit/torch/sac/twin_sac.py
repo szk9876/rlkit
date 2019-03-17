@@ -41,6 +41,7 @@ class TwinSAC(TorchRLAlgorithm):
 
             use_automatic_entropy_tuning=True,
             target_entropy=None,
+            fixed_entropy=0.1,
             **kwargs
     ):
         if eval_policy is None:
@@ -79,6 +80,8 @@ class TwinSAC(TorchRLAlgorithm):
                 [self.log_alpha],
                 lr=policy_lr,
             )
+        else:
+            self.fixed_entropy = fixed_entropy
 
         self.plotter = plotter
         self.render_eval_paths = render_eval_paths
@@ -134,7 +137,7 @@ class TwinSAC(TorchRLAlgorithm):
             self.alpha_optimizer.step()
             alpha = self.log_alpha.exp()
         else:
-            alpha = 1
+            alpha = self.fixed_entropy
             alpha_loss = 0
 
         """

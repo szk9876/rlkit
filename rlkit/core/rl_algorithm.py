@@ -129,6 +129,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         self._current_path_builder = PathBuilder()
         self._exploration_paths = []
         self.post_epoch_funcs = []
+        self.logger = logger
 
     def train(self, start_epoch=0):
         self.pretrain()

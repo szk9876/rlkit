@@ -1,5 +1,5 @@
 import numpy as np
-
+from gym.spaces import Discrete
 
 def create_rollout_function(rollout_function, **initial_kwargs):
     """
@@ -49,6 +49,9 @@ def multitask_rollout(
     if animated:
         env.render()
     goal = o[desired_goal_key]
+    if type(env.observation_space.spaces[desired_goal_key]) is Discrete:
+        goal = np.zeros(env.observation_space.spaces[desired_goal_key].n)
+        goal[o[desired_goal_key]] = 1
     while path_length < max_path_length:
         full_observations.append(o)
         o = o[observation_key]
