@@ -468,8 +468,13 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         if hasattr(self.env, "get_diagnostics"):
             statistics.update(self.env.get_diagnostics(test_paths))
 
-        average_returns = eval_util.get_average_returns(test_paths)
-        statistics['AverageReturn'] = average_returns
+        for i in range(len(test_paths)):
+            self.env.update_rewards(test_paths[i])
+        
+        statistics['AverageReturn'] = eval_util.get_average_returns(test_paths)
+        statistics['AverageEnvironmentReturn'] = eval_util.get_average_environment_returns(test_paths)
+        statistics['AverageUnsupervisedReturn'] = eval_util.get_average_unsupervised_returns(test_paths)
+
         for key, value in statistics.items():
             logger.record_tabular(key, value)
         self.need_to_update_eval_statistics = True

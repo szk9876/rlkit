@@ -97,6 +97,7 @@ class URL(TorchRLAlgorithm):
         self._n_rollouts_total += 1
         if len(self._current_path_builder) > 0:
             path = self._current_path_builder.get_all_stacked()
+            # self.env.update_rewards(path)
             self.replay_buffer.add_path(path)
             self._exploration_paths.append(path)  # unneeded, wastes memory
             self._current_path_builder = PathBuilder()

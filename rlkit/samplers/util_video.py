@@ -3,6 +3,7 @@ import numpy as np
 from array2gif import write_gif
 import time
 import cv2
+import pickle
 
 def rollout(env, agent, max_path_length=np.inf, animated=False, skill=None, deterministic=False, 
             streamer=None):
@@ -37,29 +38,36 @@ def rollout(env, agent, max_path_length=np.inf, animated=False, skill=None, dete
     terminals = []
     agent_infos = []
     env_infos = []
+    path_length = 0
     o = env.reset()
     next_o = None
-    path_length = 0
     episode = []
+
+    episode_count = 0
+    skill = 0
+
     if animated:
-        # episode.append(env._wrapped_env.sim.render(100, 100))
+        episode.append(env._wrapped_env.sim.render(768, 588))
         # env.render()
         # frame = env._wrapped_env.sim.render('rgb_array', width=256, height=196)
         frame = env._wrapped_env.sim.render(768, 588)  # 256, 196
         # frame = env._wrapped_env.sim.render(256, 196)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         streamer.update_frame(frame)
 
 
     done = False
-    while path_length < max_path_length:
+    while True: #path_length < max_path_length:
         if animated and not streamer.is_streaming:
             streamer.start_streaming()
 
         a, agent_info = agent.get_action(o, skill=skill, deterministic=deterministic)
         next_o, r, d, env_info = env.step(a)
         observations.append(o)
-        # print(r)
+        if path_length > max_path_length:
+            d = True
+            path_length = 0
+
         rewards.append(r)
         terminals.append(d)
         actions.append(a)
@@ -69,31 +77,20 @@ def rollout(env, agent, max_path_length=np.inf, animated=False, skill=None, dete
         if done:
             done = False
             print('Done with Episode!')
-            break
+            episode_count += 1
+            skill = episode_count % 5
+            print(skill)        
+            if episode_count == 10:
+                pickle.dump( episode, open( "image_array.p", "wb" ) )
+            # break
+            o = env.reset()
         if d:
-            # print('here')
-            # print(next_o['observation'])
-            # print(env.wrapped_env._position)
-            # print(env.wrapped_env._target_position)
-            # print(np.linalg.norm(env.wrapped_env._position - env.wrapped_env._target_position))
-            # observations.append(next_o)
             done = True
         o = next_o
         if animated:
-            # episode.append(env._wrapped_env.sim.render(100, 100))
-            # env.render()
-            # time.sleep(5)
-            # frame = env._wrapped_env.sim.render('rgb_array', width=256, height=196)
-            frame = env._wrapped_env.sim.render(768, 588) # 256, 196
-            # frame = env._wrapped_env.sim.render(256, 196)
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            streamer.update_frame(frame)
-    # if animated:
-        # episode = np.array(episode)
-        # episode[episode > 128] = 255
-        # episode[episode <= 128] = 0
-        # write_gif(episode, 'movie.gif', fps=5)
-    
+            if episode_count >= 1:
+                episode.append(env._wrapped_env.sim.render(768, 588))
+   
     actions = np.array(actions)
     if len(actions.shape) == 1:
         actions = np.expand_dims(actions, 1)

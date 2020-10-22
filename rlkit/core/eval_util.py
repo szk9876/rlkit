@@ -32,11 +32,18 @@ def get_generic_path_information(paths, stat_prefix=''):
 
     return statistics
 
-
 def get_average_returns(paths):
     returns = [sum(path["rewards"]) for path in paths]
     return np.mean(returns)
 
+def get_average_unsupervised_returns(paths):
+    # import pdb; pdb.set_trace()
+    returns = [sum(path["unsupervised_rewards"]) for path in paths]
+    return np.mean(returns)
+
+def get_average_environment_returns(paths):
+    returns = [sum(path["environment_rewards"]) for path in paths]
+    return np.mean(returns)
 
 def create_stats_ordered_dict(
         name,

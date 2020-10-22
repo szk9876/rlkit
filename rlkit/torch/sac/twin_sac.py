@@ -42,6 +42,7 @@ class TwinSAC(TorchRLAlgorithm):
             use_automatic_entropy_tuning=True,
             target_entropy=None,
             fixed_entropy=0.1,
+            target_entropy_multiplier=1.0,
             **kwargs
     ):
         if eval_policy is None:
@@ -68,13 +69,15 @@ class TwinSAC(TorchRLAlgorithm):
         self.train_policy_with_reparameterization = (
             train_policy_with_reparameterization
         )
+        self.target_entropy_multiplier = target_entropy_multiplier
 
         self.use_automatic_entropy_tuning = use_automatic_entropy_tuning
+        # import pdb; pdb.set_trace()
         if self.use_automatic_entropy_tuning:
             if target_entropy:
                 self.target_entropy = target_entropy
             else:
-                self.target_entropy = -np.prod(self.env.action_space.shape).item()  # heuristic value from Tuomas
+                self.target_entropy = - self.target_entropy_multiplier * np.prod(self.env.action_space.shape).item()  # heuristic value from Tuomas
             self.log_alpha = ptu.zeros(1, requires_grad=True)
             self.alpha_optimizer = optimizer_class(
                 [self.log_alpha],
@@ -144,7 +147,7 @@ class TwinSAC(TorchRLAlgorithm):
         QF Loss
         """
         target_v_values = self.target_vf(next_obs)
-        q_target = self.reward_scale * rewards + (1. - terminals) * self.discount * target_v_values
+        q_target = self.reward_scale * rewards.squeeze_().unsqueeze_(-1) + (1. - terminals) * self.discount * target_v_values
         qf1_loss = self.qf_criterion(q1_pred, q_target.detach())
         qf2_loss = self.qf_criterion(q2_pred, q_target.detach())
 

@@ -64,17 +64,27 @@ class Mlp(PyTorchModule):
         self.last_fc.weight.data.uniform_(-init_w, init_w)
         self.last_fc.bias.data.uniform_(-init_w, init_w)
 
-    def forward(self, input, return_preactivations=False):
+    def forward(self, input, return_preactivations=False, return_penultimate_layer=False):
         h = input
         for i, fc in enumerate(self.fcs):
             h = fc(h)
             if self.layer_norm and i < len(self.fcs) - 1:
                 h = self.layer_norms[i](h)
             h = self.hidden_activation(h)
+        
+        penultimate_layer = h
+
         preactivation = self.last_fc(h)
         output = self.output_activation(preactivation)
+        
+        extra_info = {}
         if return_preactivations:
-            return output, preactivation
+            extra_info['preactivations'] = preactivation
+        if return_penultimate_layer:
+            extra_info['penultimate_layer'] = penultimate_layer
+        
+        if return_preactivations or return_penultimate_layer:
+            return output, extra_info        
         else:
             return output
 

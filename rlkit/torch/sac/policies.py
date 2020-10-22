@@ -36,6 +36,7 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
             action_dim,
             std=None,
             init_w=1e-3,
+            num_skills=1,
             **kwargs
     ):
         self.save_init_params(locals())
@@ -48,6 +49,7 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
         )
         self.log_std = None
         self.std = std
+        self.num_skills = num_skills
         if std is None:
             last_hidden_size = obs_dim
             if len(hidden_sizes) > 0:
@@ -58,12 +60,23 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
         else:
             self.log_std = np.log(std)
             assert LOG_SIG_MIN <= self.log_std <= LOG_SIG_MAX
+        # This line added by Saurabh to push the model to the GPU.
+        self.to('cuda:0')        
+   
+    def get_action(self, obs_np, deterministic=False, skill=None):
+        # import pdb; pdb.set_trace()
+        if skill is not None:
+            actions = self.get_actions(obs_np['observation'], deterministic=deterministic, skill=skill)
+            return actions, {}
+        else:
+            actions = self.get_actions(obs_np[None], deterministic=deterministic)
+            return actions[0, :], {}
 
-    def get_action(self, obs_np, deterministic=False):
-        actions = self.get_actions(obs_np[None], deterministic=deterministic)
-        return actions[0, :], {}
-
-    def get_actions(self, obs_np, deterministic=False):
+    def get_actions(self, obs_np, deterministic=False, skill=None):
+        if skill is not None:
+            a = np.zeros(self.num_skills)
+            a[skill] = 1
+            obs_np = np.concatenate((obs_np, a))
         return self.eval_np(obs_np, deterministic=deterministic)[0]
 
     def forward(
@@ -79,6 +92,7 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
         :param return_log_prob: If True, return a sample and its log probability
         """
         h = obs
+        # import pdb; pdb.set_trace()
         for i, fc in enumerate(self.fcs):
             h = self.hidden_activation(fc(h))
         mean = self.last_fc(h)

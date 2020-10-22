@@ -81,88 +81,90 @@ def experiment(variant):
 
 if __name__ == "__main__":
     # point2d
+    diayn_weight = 100.
+    variant = dict(
+        env_name='Point2D-center-v0',
+        algo_kwargs=dict(
+            num_epochs=50,
+            num_steps_per_epoch=1000,
+            num_steps_per_eval=1000,
+            # num_updates_per_epoch=1000,
+            num_updates_per_env_step=1,
+            max_path_length=100,
+            batch_size=128,
+            discount=0.99,
+    
+            soft_target_tau=0.01,
+            policy_lr=3e-4,
+            qf_lr=3e-4,
+            vf_lr=3e-4,
+    
+            collection_mode='online',
+            save_replay_buffer=True,
+            save_environment=True,
+    
+            use_automatic_entropy_tuning=True,
+            fixed_entropy=0.1
+        ),
+        replay_buffer_kwargs=dict(
+            max_size=100000,
+        ),
+        disc_kwargs=dict(
+            batch_size=128,
+            num_batches_per_fit=1,
+            num_skills=6,
+            sampling_strategy='random',
+            sampling_window=10,
+        ),
+        env_kwargs=dict(
+            reward_params=dict(type='wrapped_env + tiayn'),
+            diayn_weight=diayn_weight
+        ),
+        net_size=32
+    )
+
     # variant = dict(
-    #     env_name='Point2D-center-v0',
+    #     env_name='HalfCheetahEnv-v0',
     #     algo_kwargs=dict(
-    #         num_epochs=50,
+    #         num_epochs=10000,
     #         num_steps_per_epoch=1000,
     #         num_steps_per_eval=1000,
     #         # num_updates_per_epoch=1000,
     #         num_updates_per_env_step=1,
-    #         max_path_length=100,
+    #         max_path_length=1000,
     #         batch_size=128,
     #         discount=0.99,
-    #
+
     #         soft_target_tau=0.01,
     #         policy_lr=3e-4,
     #         qf_lr=3e-4,
     #         vf_lr=3e-4,
-    #
+
     #         collection_mode='online',
     #         save_replay_buffer=True,
     #         save_environment=True,
-    #
+
     #         use_automatic_entropy_tuning=True,
     #         fixed_entropy=0.1
     #     ),
     #     replay_buffer_kwargs=dict(
-    #         max_size=100000,
+    #         max_size=10000,
     #     ),
     #     disc_kwargs=dict(
     #         batch_size=128,
     #         num_batches_per_fit=1,
     #         num_skills=50,
-    #
+
     #         sampling_strategy='random',
     #         sampling_window=10,
     #     ),
     #     env_kwargs=dict(
     #         reward_params=dict(type='diayn')
     #     ),
-    #     net_size=32
+    #     net_size=300
     # )
 
-    variant = dict(
-        env_name='HalfCheetahEnv-v0',
-        algo_kwargs=dict(
-            num_epochs=10000,
-            num_steps_per_epoch=1000,
-            num_steps_per_eval=1000,
-            # num_updates_per_epoch=1000,
-            num_updates_per_env_step=1,
-            max_path_length=1000,
-            batch_size=128,
-            discount=0.99,
-
-            soft_target_tau=0.01,
-            policy_lr=3e-4,
-            qf_lr=3e-4,
-            vf_lr=3e-4,
-
-            collection_mode='online',
-            save_replay_buffer=True,
-            save_environment=True,
-
-            use_automatic_entropy_tuning=True,
-            fixed_entropy=0.1
-        ),
-        replay_buffer_kwargs=dict(
-            max_size=10000,
-        ),
-        disc_kwargs=dict(
-            batch_size=128,
-            num_batches_per_fit=1,
-            num_skills=50,
-
-            sampling_strategy='random',
-            sampling_window=10,
-        ),
-        env_kwargs=dict(
-            reward_params=dict(type='diayn')
-        ),
-        net_size=300
-    )
-
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
-    setup_logger('url-disc-half-cheetah', variant=variant)
+    # setup_logger('url-disc-half-cheetah', variant=variant)
+    setup_logger('reward+{}*tiayn'.format(diayn_weight), variant=variant)
     experiment(variant)

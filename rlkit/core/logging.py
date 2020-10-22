@@ -197,6 +197,7 @@ class Logger(object):
         file_name = osp.join(self._snapshot_dir, file_name)
         if mode == 'joblib':
             import joblib
+            # import pdb; pdb.set_trace()
             joblib.dump(data, file_name, compress=3)
         elif mode == 'pickle':
             pickle.dump(data, open(file_name, "wb"))

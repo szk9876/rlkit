@@ -1,4 +1,4 @@
-name: rlkitfinalbaby
+name: rlkitworkstation
 channels:
 - kne  # for pybox2d
 - pytorch
